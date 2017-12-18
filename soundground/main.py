@@ -8,16 +8,28 @@ import argparse
 import sys
 import curses
 
-from soundground import metadata, winman
+from soundground import metadata, winman, utils
+from soundground.winman import Value
 
 def main(stdscr):
     """
     Program entry point.
     """
 
+    # Initialize screen
     stdscr.clear()
-
     wg = winman.WindowGroup(stdscr)
+    
+    # Create windows
+    wg.create_window('title', 0, 0, 1, Value(100))
+    wg.create_window('status', Value(100, -1), 0, 1, Value(100))
+    wg.create_window('nav', 1, 0, Value(100, -2), Value(25))
+
+    wg['title'].bkgd(' ', curses.A_UNDERLINE)
+    wg['title'].addstr(0, 0, 'Soundground - v0.1')
+    wg['nav'].border(' ', '|', ' ', ' ', ' ', '|', ' ', '|')
+
+    wg.resize()
 
     while True:
         # Read input

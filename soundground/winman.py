@@ -46,6 +46,7 @@ class WindowGroup(object):
     def draw(self):
         for name in self.windows:
             window = self.windows[name].window
+            window.overwrite(self.stdscr)
             window.noutrefresh()
 
         curses.doupdate()
@@ -55,7 +56,9 @@ class WindowGroup(object):
         Resizes windows based on their percent values
         """
 
-        height, width = (curses.LINES, curses.COLS)
+        curses.endwin()
+        height, width = self.stdscr.getmaxyx()
+        self.stdscr.move(height - 1, 0)
 
         for name in self.windows:
             window = self.windows[name]
@@ -73,14 +76,14 @@ class WindowGroup(object):
 
         ymax, xmax = (curses.LINES, curses.COLS)
 
-        self.windows[name] = RelativeWindow(y, x, h, w, ymax, xmax)
+        self.windows[name] = RelativeWindow(y, x, h, w, self.stdscr)
 
 class RelativeWindow(object):
     """
     Windows with relative sizes
     """
 
-    def __init__(self, y, x, h, w, ymax, xmax):
+    def __init__(self, y, x, h, w, stdscr):
         """
         Initialize sizes
         """
@@ -90,6 +93,7 @@ class RelativeWindow(object):
         self.w = w
 
         self.window = curses.newwin(1, 1, 0, 0)
+        ymax, xmax = stdscr.getmaxyx()
         self.resize(ymax, xmax)
         pass
 

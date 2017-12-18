@@ -6,51 +6,35 @@ from __future__ import print_function
 
 import argparse
 import sys
+import curses
 
-from soundground import metadata
+from soundground import metadata, winman
 
-
-def main(argv):
-    """Program entry point.
-
-    :param argv: command-line arguments
-    :type argv: :class:`list`
+def main(stdscr):
     """
-    author_strings = []
-    for name, email in zip(metadata.authors, metadata.emails):
-        author_strings.append('Author: {0} <{1}>'.format(name, email))
+    Program entry point.
+    """
 
-    epilog = '''
-{project} {version}
+    stdscr.clear()
 
-{authors}
-URL: <{url}>
-'''.format(
-        project=metadata.project,
-        version=metadata.version,
-        authors='\n'.join(author_strings),
-        url=metadata.url)
+    wg = winman.WindowGroup(stdscr)
 
-    arg_parser = argparse.ArgumentParser(
-        prog=argv[0],
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=metadata.description,
-        epilog=epilog)
-    arg_parser.add_argument(
-        '-V', '--version',
-        action='version',
-        version='{0} {1}'.format(metadata.project, metadata.version))
+    while True:
+        # Read input
+        c = stdscr.getch()
+        if c == ord('q'):
+            break
 
-    arg_parser.parse_args(args=argv[1:])
-
-    print(epilog)
+        # Check terminal resize
+        if c == curses.KEY_RESIZE:
+            wg.resize()
 
     return 0
 
 
 def entry_point():
     """Zero-argument entry point for use with setuptools/distribute."""
-    raise SystemExit(main(sys.argv))
+    raise SystemExit(curses.wrapper(main))
 
 
 if __name__ == '__main__':

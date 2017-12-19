@@ -44,6 +44,7 @@ class WindowGroup(object):
         return self.windows[name].window
 
     def draw(self):
+        self.stdscr.clear()
         for name in self.windows:
             window = self.windows[name].window
             window.overwrite(self.stdscr)
@@ -109,20 +110,55 @@ class RelativeWindow(object):
         self.window.resize(new_height, new_width)
         self.window.mvwin(new_y, new_x)
 
-class TitleBar(object):
+class SelectableList(object):
     """
-    Handles the title bar
+    Implements a scrollable list with selectable items
     """
 
     def __init__(self, window):
-        """
-        Initialize variables and draw on window
-        """
         self.window = window
-        self.w, self.h = (curses.LINES, curses.COLS)
-        self.components = {}
+        self.items = []
+        self.selected = 0
 
-        # Draw
-        title_text = "Soundground v{}".format(metadata.version)
-        title_x = utils.center_text(self.w, title_text)
-        self.components.title = self.window.addstr(0, int(title_x), title_text)
+    def draw(self):
+        """
+        Redraw list
+        """
+        self.window.clear()
+        height, width = self.window.getmaxyx()
+        skip = self.selected // 10
+        for offset in range(height):
+            index = skip + offset
+            if index >= len(self.items):
+                # No more items to draw
+                break
+
+            item = self.items[index]
+            attr = curses.A_REVERSE if index == self.selected else curses.A_NORMAL
+            padded = item['caption'].ljust(width)
+            self.window.addstr(offset, 0, padded, attr)
+
+    def add(self, caption, selectable=True):
+        self.items.append({
+            'caption': caption,
+            'selectable': selectable
+        })
+        self.draw()
+
+    def remove(self, index):
+        self.items.pop(index)
+        self.draw()
+
+    def select(self, index, relative=True):
+        if relative:
+            self.selected += index
+        else:
+            self.selected = index
+
+        # Make sure selection doesn't go out of bounds
+        if self.selected < 0:
+            self.selected = 0
+        elif self.selected >= len(self.items):
+            self.selected = len(self.items) - 1
+
+        self.draw()

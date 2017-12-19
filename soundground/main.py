@@ -68,9 +68,11 @@ def main(stdscr):
     stdscr.clear()
     stdscr.timeout(100)
     wg = wm.WindowGroup(stdscr)
-    ci = command_interpreter.Interpreter()
  
     controls = init_windows(wg)
+
+    # Pass command box control to interpreter
+    ci = command_interpreter.Interpreter(controls['cmd'])
 
     # Keep track of active control
     active = 'nav'
@@ -80,12 +82,10 @@ def main(stdscr):
 
     last_command = ''
     while True:
-        # Check command box
-        if controls['cmd'].gather() != last_command:
-            # New command was entered
-            last_command = controls['cmd'].gather()
+        # Clear command box if not editing
+        if ci.is_done():
             wg['command'].clear()
-            ci.execute(last_command)
+            wg['command'].refresh()
 
         # Read input
         c = stdscr.getch()
@@ -97,7 +97,7 @@ def main(stdscr):
             # Enter command mode
             wg['command'].clear()
             wg['command'].addch(':')
-            controls['cmd'].edit()
+            controls['cmd'].edit(ci.validate)
         elif c in {ord('j'), ord('k'), curses.KEY_DOWN, curses.KEY_UP}:
             # Process up/down selection
             if c in {ord('j'), curses.KEY_DOWN}:
@@ -105,6 +105,7 @@ def main(stdscr):
             else:
                 direction = -1
 
+            # Send selection change to active control
             if active in controls:
                 controls[active].select(direction)
 

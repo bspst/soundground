@@ -126,7 +126,7 @@ class SelectableList(object):
         """
         self.window.clear()
         height, width = self.window.getmaxyx()
-        skip = self.selected // 10
+        skip = self.selected // height
         for offset in range(height):
             index = skip + offset
             if index >= len(self.items):
@@ -134,9 +134,11 @@ class SelectableList(object):
                 break
 
             item = self.items[index]
+            # Change background for selected item
             attr = curses.A_REVERSE if index == self.selected else curses.A_NORMAL
             padded = item['caption'].ljust(width)
             self.window.addstr(offset, 0, padded, attr)
+        self.window.refresh()
 
     def add(self, caption, selectable=True):
         self.items.append({
@@ -160,5 +162,11 @@ class SelectableList(object):
             self.selected = 0
         elif self.selected >= len(self.items):
             self.selected = len(self.items) - 1
+
+        # Skip unselectable items
+        if not self.items[self.selected]['selectable']:
+            if not relative:
+                return False
+            self.selected += index
 
         self.draw()

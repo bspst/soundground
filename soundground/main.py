@@ -69,6 +69,9 @@ def main(stdscr):
  
     controls = init_windows(wg)
 
+    # Keep track of active control
+    active = 'nav'
+
     # Force redraw windows
     wg.resize()
 
@@ -92,6 +95,15 @@ def main(stdscr):
             wg['command'].clear()
             wg['command'].addch(':')
             controls['cmd'].edit()
+        elif c in {ord('j'), ord('k'), curses.KEY_DOWN, curses.KEY_UP}:
+            # Process up/down selection
+            if c in {ord('j'), curses.KEY_DOWN}:
+                direction = 1
+            else:
+                direction = -1
+
+            if active in controls:
+                controls[active].select(direction)
 
         # Check terminal resize
         if c == curses.KEY_RESIZE:

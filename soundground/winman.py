@@ -36,6 +36,7 @@ class WindowGroup(object):
 
         self.windows = {}
         self.stdscr = stdscr
+        self.extra_draws = []
 
     def __getitem__(self, name):
         """
@@ -44,11 +45,19 @@ class WindowGroup(object):
         return self.windows[name].window
 
     def draw(self):
+        """
+        Refresh all windows
+        """
+
         self.stdscr.clear()
         for name in self.windows:
             window = self.windows[name].window
             window.overwrite(self.stdscr)
             window.noutrefresh()
+
+        # Also refresh extra stuff (e.g. SelectableList)
+        for instance in self.extra_draws:
+            instance.draw()
 
         curses.doupdate()
 
@@ -119,6 +128,7 @@ class SelectableList(object):
         self.window = window
         self.items = []
         self.selected = 0
+        self.scrollpos = 0
 
     def draw(self):
         """
@@ -126,9 +136,8 @@ class SelectableList(object):
         """
         self.window.clear()
         height, width = self.window.getmaxyx()
-        skip = self.selected // height
         for offset in range(height):
-            index = skip + offset
+            index = self.scrollpos + offset
             if index >= len(self.items):
                 # No more items to draw
                 break
@@ -137,7 +146,10 @@ class SelectableList(object):
             # Change background for selected item
             attr = curses.A_REVERSE if index == self.selected else curses.A_NORMAL
             padded = item['caption'].ljust(width)
-            self.window.addstr(offset, 0, padded, attr)
+            try:
+                self.window.addstr(offset, 0, padded, attr)
+            except:
+                pass
         self.window.refresh()
 
     def add(self, caption, selectable=True):
@@ -168,5 +180,12 @@ class SelectableList(object):
             if not relative:
                 return False
             self.selected += index
+
+        # Update scroll position
+        height, width = self.window.getmaxyx()
+        if self.selected + 1 >= self.scrollpos + height:
+            self.scrollpos = self.selected - height + 1
+        elif self.selected < self.scrollpos:
+            self.scrollpos = self.selected
 
         self.draw()

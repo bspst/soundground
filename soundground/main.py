@@ -40,10 +40,13 @@ def init_windows(wg):
     # Set title bar style and contents
     wg['title'].bkgd(' ', curses.A_UNDERLINE)
     wg['title'].addstr(0, 0, "Soundground - v{}".format(metadata.version))
+
     # Left navigation pane
     wg['nav'].border(' ', '|', ' ', ' ', ' ', '|', ' ', '|')
     navlist = wm.SelectableList(wg['nav'])
     init_nav(navlist)
+    wg.extra_draws.append(navlist)
+
     # Command bar and textbox
     wg['command'].bkgd(' ', curses.A_REVERSE)
     wg['command'].addstr(0, 0, "Type :help for commands")

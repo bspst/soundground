@@ -32,4 +32,7 @@ class Interpreter(object):
         return keycode
 
     def execute(self):
-        cmd = self.textbox.gather()
+        cmd = self.textbox.gather()[1:].strip()
+
+        if cmd == 'q' or cmd == 'quit':
+            raise SystemExit(0)

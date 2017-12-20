@@ -89,6 +89,8 @@ def main(stdscr):
     cred = credman.Credentials()
     cred.load()
     controls['nav'].items[0]['caption'] = cred.username
+    if cred.username != '':
+        controls['nav'].items[1]['caption'] = 'Logout'
     controls['nav'].select(1)
 
     # Pass command box control to interpreter

@@ -7,6 +7,7 @@ Runs commands
 
 class Interpreter(object):
     def __init__(self, textbox, statusline, player, cred):
+        # TODO: maybe change this to **kwargs
         self.history = []
         self.textbox = textbox
         self.statusline = statusline
@@ -44,10 +45,23 @@ class Interpreter(object):
             self.player.set_mrl(cmd[1])
             self.player.play()
         elif cmd[0] == 'login':
+            # Check if logged in
+            if self.cred.username != '':
+                self.statusline.notify("Already logged in as {}".format(self.cred.username))
+                return False
             # Show login prompt
             self.cred.username = self.statusline.prompt("Username: ")
             self.cred.password = self.statusline.prompt("Password: ", True)
             savecreds = self.statusline.prompt("Save credentials (y/N)? ")
+            self.statusline.notify("Temporarily logged in. Restart soundground to log out.")
             if len(savecreds) > 0 and savecreds[0].lower() == 'y':
+                self.statusline.notify("Logged in. Please restart soundground.")
                 self.cred.save()
-            self.statusline.draw()
+        elif cmd[0] == 'logout':
+            # Remove username and password from credentials file
+            self.cred.username = ''
+            self.cred.password = ''
+            self.cred.save()
+            self.statusline.notify("Logged out. Please restart soundground.")
+        else:
+            self.statusline.notify("Unknown command `{}`".format(cmd[0]))

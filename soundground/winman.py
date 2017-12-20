@@ -217,6 +217,7 @@ class StatusLine(object):
         self.window = window
         self.player = player
         self.override_text = None
+        self.override_cycles = 0
 
         self.prompting = False
         self.prompt_hidden = False
@@ -240,8 +241,9 @@ class StatusLine(object):
         formatted = text.format(playing, title, t_now, t_total, vol)
 
         # Override status text if present
-        if self.override_text != None:
+        if self.override_text != None and self.override_cycles > 0:
             formatted = self.override_text
+            self.override_cycles -= 1
 
         # Draw to screen
         try:
@@ -252,16 +254,17 @@ class StatusLine(object):
 
     def notify(self, text):
         """
-        Shows text in the status bar until manually dismissed
+        Shows text in the status bar until next refresh or manually dismissed
         """
         self.override_text = text
+        self.override_cycles = 30
         self.draw()
 
     def dismiss(self):
         """
         Dismiss notification text
         """
-        self.override_text = None
+        self.override_cycles = 0
         self.draw()
 
     def prompt(self, text, hidden=False):

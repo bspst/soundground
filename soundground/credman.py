@@ -9,8 +9,8 @@ import os, json
 
 class Credentials(object):
     def __init__(self):
-        self.username = None
-        self.password = None
+        self.username = ''
+        self.password = ''
         self.base_dir = os.path.expanduser("~/.soundground/")
         self.save_name = "credentials.json"
         self.save_location = os.path.join(self.base_dir, self.save_name)

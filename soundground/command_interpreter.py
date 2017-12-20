@@ -55,13 +55,13 @@ class Interpreter(object):
             savecreds = self.statusline.prompt("Save credentials (y/N)? ")
             self.statusline.notify("Temporarily logged in. Restart soundground to log out.")
             if len(savecreds) > 0 and savecreds[0].lower() == 'y':
-                self.statusline.notify("Logged in. Please restart soundground.")
+                self.statusline.notify("Logged in.")
                 self.cred.save()
         elif cmd[0] == 'logout':
             # Remove username and password from credentials file
             self.cred.username = ''
             self.cred.password = ''
             self.cred.save()
-            self.statusline.notify("Logged out. Please restart soundground.")
+            self.statusline.notify("Logged out.")
         else:
             self.statusline.notify("Unknown command `{}`".format(cmd[0]))

@@ -13,12 +13,23 @@ from soundground import winman as wm
 from soundground import command_interpreter
 from soundground.winman import Value
 
-def init_nav(navlist):
+def refresh_nav(navlist, cred=None):
     """
     Fill left navigation pane
     """
-    navlist.add("Guest", False)
-    navlist.add("Login")
+
+    # Clear the list to prevent duplicates
+    navlist.items.clear()
+
+    # Use empty credentials if not given
+    if cred == None:
+        cred = credman.Credentials()
+
+    navlist.add(cred.username, False)
+    if cred.username == '':
+        navlist.add("Login")
+    else:
+        navlist.add("Logout")
 
     navlist.add("", False)
 
@@ -36,6 +47,8 @@ def init_nav(navlist):
     navlist.add("Following")
     navlist.add("History")
 
+    navlist.select(1, False)
+
 
 def init_windows(wg):
     # Create windows
@@ -50,7 +63,7 @@ def init_windows(wg):
     # Left navigation pane
     wg['nav'].border(' ', '|', ' ', ' ', ' ', '|', ' ', '|')
     navlist = wm.SelectableList(wg['nav'])
-    init_nav(navlist)
+    refresh_nav(navlist)
     wg.extra_draws.append(navlist)
 
     # Command bar and textbox
@@ -88,10 +101,7 @@ def main(stdscr):
     # Start credentials manager
     cred = credman.Credentials()
     cred.load()
-    controls['nav'].items[0]['caption'] = cred.username
-    if cred.username != '':
-        controls['nav'].items[1]['caption'] = 'Logout'
-    controls['nav'].select(1)
+    refresh_nav(controls['nav'], cred)
 
     # Pass command box control to interpreter
     ci = command_interpreter.Interpreter(controls['cmd'], statusline, mp, cred)
@@ -138,6 +148,7 @@ def main(stdscr):
             if active == 'nav':
                 # Select nav item
                 ci.execute(item['caption'].lower()) # (will break when i18n'd)
+                refresh_nav(controls['nav'], cred)
 
         elif c in {ord('-'), ord('='), ord('+')}:
             # Volume control

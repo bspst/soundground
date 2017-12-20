@@ -17,6 +17,10 @@ def init_nav(navlist):
     """
     Fill left navigation pane
     """
+    navlist.add("Login")
+
+    navlist.add("", False)
+
     navlist.add("Stream")
     navlist.add("Charts")
     navlist.add("Discover")
@@ -118,6 +122,15 @@ def main(stdscr):
             if active in controls:
                 controls[active].select(direction)
 
+        elif c == 10:
+            # Enter to confirm selection
+            index = controls[active].selected
+            item = controls[active].items[index]
+            if active == 'nav':
+                # Select nav item
+                if item.caption == 'Login':
+                    pass
+
         elif c in {ord('-'), ord('='), ord('+')}:
             # Volume control
             current = mp.audio_get_volume()
@@ -127,8 +140,8 @@ def main(stdscr):
                 current += 10
 
             # Clamp volume levels
-            if current > 125:
-                current = 125
+            if current > 150:
+                current = 150
             if current < 0:
                 current = 0
 

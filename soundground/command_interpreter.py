@@ -27,6 +27,9 @@ class Interpreter(object):
         return keycode
 
     def execute(self):
+        """
+        Runs a command
+        """
         cmd = self.textbox.gather()[1:].strip().split()
 
         if cmd[0] == 'q' or cmd[0] == 'quit':

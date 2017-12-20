@@ -78,7 +78,7 @@ class WindowGroup(object):
 
     def create_window(self, name, y, x, h, w):
         """
-        Creates a new window, accepting either fixed or relative numbers
+        Creates a new window, accepting either integer or Value
         """
 
         if name in self.windows:
@@ -152,6 +152,9 @@ class SelectableList(object):
         self.window.refresh()
 
     def add(self, caption, selectable=True):
+        """
+        Add an item to the list
+        """
         self.items.append({
             'caption': caption,
             'selectable': selectable
@@ -159,10 +162,17 @@ class SelectableList(object):
         self.draw()
 
     def remove(self, index):
+        """
+        Remove an item by its index
+        """
         self.items.pop(index)
         self.draw()
 
     def select(self, index, relative=True):
+        """
+        Highlight an item by its index. If relative, the current selection index
+        will be incremented by the index parameter instead of being set.
+        """
         if relative:
             self.selected += index
         else:
@@ -203,8 +213,14 @@ class StatusLine(object):
         self.player = player
         self.override_text = None
 
+        self.prompting = False
+        self.prompt_hidden = False
+        self.prompt_value = ''
+
     def draw(self):
-        # Redraw status bar
+        """
+        Redraw status bar
+        """
         self.window.erase()
 
         # Fetch some parameters
@@ -240,3 +256,40 @@ class StatusLine(object):
         Dismiss notification text
         """
         self.override_text = None
+
+    def prompt(self, text, hidden=False):
+        """
+        Prompts the user for input
+        Keystrokes will be hidden if hidden is True
+        """
+        import curses.textpad.Textbox
+
+        self.prompting = True
+        self.prompt_hidden = hidden
+
+        self.window.clear()
+        try:
+            self.window.addstr(0, 0, text)
+            self.window.refresh()
+        except:
+            pass
+
+        box = Textbox(self.window)
+        box.edit(self._prompt_validator)
+
+    def _prompt_validator(self, char):
+        """
+        Listens for keystrokes on prompt
+        """
+        if char == 10:
+            # Line feed (Enter/Return)
+            self.prompting = False
+            return char
+
+        self.prompt_value += chr(char)
+
+        if self.prompt_hidden:
+            # Return null characters if hidden is set
+            return 0
+
+        return char

@@ -7,4 +7,7 @@ Auxilary functions
 from datetime import datetime
 
 def format_millis(millis):
+    """
+    Formats milliseconds to a mm:ss format
+    """
     return datetime.fromtimestamp(millis/1000.0).strftime("%M:%S")

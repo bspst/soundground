@@ -50,7 +50,6 @@ def init_windows(wg):
 
     # Command bar and textbox
     wg['command'].bkgd(' ', curses.A_REVERSE)
-    wg['command'].addstr(0, 0, "Type :help for commands")
     commandbox = curses.textpad.Textbox(wg['command'])
 
     # Return controls
@@ -73,31 +72,39 @@ def main(stdscr):
     stdscr.timeout(100)
     wg = wm.WindowGroup(stdscr)
     controls = init_windows(wg)
+
     # Pass command box control to interpreter
     ci = command_interpreter.Interpreter(controls['cmd'], mp)
+
+    # Create status bar on top of the command bar
+    statusline = wm.StatusLine(wg['command'], mp)
+    wg.extra_draws.append(statusline)
+
     # Keep track of active control
     active = 'nav'
+
     # Force redraw windows
     wg.resize()
 
     last_command = ''
     while True:
         # Clear command box if not editing
-        if ci.is_done():
-            wg['command'].clear()
-            wg['command'].refresh()
+        if ci.done:
+            statusline.draw()
 
         # Read input
         c = stdscr.getch()
         if c == ord('q'):
             # Quit
-            # TODO: Implement y/n confirmation
-            break
+            statusline.notify("Hold q to quit")
+            if stdscr.getch() == ord('q'):
+                break
 
         elif c == ord(':'):
             # Enter command mode
             wg['command'].clear()
             wg['command'].addch(':')
+            ci.done = False
             controls['cmd'].edit(ci.validate)
 
         elif c in {ord('j'), ord('k'), curses.KEY_DOWN, curses.KEY_UP}:

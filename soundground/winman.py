@@ -123,7 +123,6 @@ class SelectableList(object):
     """
     Implements a scrollable list with selectable items
     """
-
     def __init__(self, window):
         self.window = window
         self.items = []
@@ -189,3 +188,55 @@ class SelectableList(object):
             self.scrollpos = self.selected
 
         self.draw()
+
+
+class StatusLine(object):
+    """
+    Manages the bottom status bar text
+    """
+
+    SYM_PLAY = u"\u25B6"
+    SYM_PAUSE = u"\u23F8"
+
+    def __init__(self, window, player):
+        self.window = window
+        self.player = player
+        self.override_text = None
+
+    def draw(self):
+        # Redraw status bar
+        self.window.erase()
+
+        # Fetch some parameters
+        playing = self.SYM_PLAY if self.player.is_playing() else self.SYM_PAUSE
+        title = self.player.get_title()
+        t_total = utils.format_millis(self.player.get_length())
+        t_now = utils.format_millis(self.player.get_position() * self.player.get_length())
+        vol = self.player.audio_get_volume()
+
+        # Format params
+        text = "[ {} ] {} [{}/{}] | Vol: {}"
+        formatted = text.format(playing, title, t_now, t_total, vol)
+
+        # Override status text if present
+        if self.override_text != None:
+            formatted = self.override_text
+
+        # Draw to screen
+        try:
+            self.window.addstr(0, 0, formatted)
+            self.window.refresh()
+        except:
+            pass
+
+    def notify(self, text):
+        """
+        Shows text in the status bar until manually dismissed
+        """
+        self.override_text = text
+
+    def dismiss(self):
+        """
+        Dismiss notification text
+        """
+        self.override_text = None

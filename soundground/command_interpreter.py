@@ -12,15 +12,9 @@ class Interpreter(object):
         self.player = player
         self.done = False
 
-    def is_done(self):
-        # Returns whether the text box can be safely cleared
-        if self.done:
-            self.done = False
-            return True
-
-        return False
-
     def validate(self, keycode):
+        self.done = False
+
         if keycode == 27:
             # Map Escape to Ctrl-G (BEL), which terminates the editing sesson
             self.done = True

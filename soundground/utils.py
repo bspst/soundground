@@ -4,5 +4,7 @@
 Auxilary functions
 """
 
-def center_text(width, text):
-    return width / 2 - len(text) / 2
+from datetime import datetime
+
+def format_millis(millis):
+    return datetime.fromtimestamp(millis/1000.0).strftime("%M:%S")

@@ -6,10 +6,12 @@ Runs commands
 """
 
 class Interpreter(object):
-    def __init__(self, textbox, player):
+    def __init__(self, textbox, statusline, player, cred):
         self.history = []
         self.textbox = textbox
+        self.statusline = statusline
         self.player = player
+        self.cred = cred
         self.done = False
 
     def validate(self, keycode):
@@ -26,11 +28,14 @@ class Interpreter(object):
 
         return keycode
 
-    def execute(self):
+    def execute(self, cmdstr=None):
         """
         Runs a command
         """
-        cmd = self.textbox.gather()[1:].strip().split()
+        if cmdstr == None:
+            cmd = self.textbox.gather()[1:].strip().split()
+        else:
+            cmd = cmdstr.split()
 
         if cmd[0] == 'q' or cmd[0] == 'quit':
             raise SystemExit(0)
@@ -38,3 +43,11 @@ class Interpreter(object):
             # Play custom audio file by URL
             self.player.set_mrl(cmd[1])
             self.player.play()
+        elif cmd[0] == 'login':
+            # Show login prompt
+            self.cred.username = self.statusline.prompt("Username: ")
+            self.cred.password = self.statusline.prompt("Password: ", True)
+            savecreds = self.statusline.prompt("Save credentials (y/N)? ")
+            if len(savecreds) > 0 and savecreds[0].lower() == 'y':
+                self.cred.save()
+            self.statusline.draw()

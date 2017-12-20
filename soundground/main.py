@@ -8,7 +8,7 @@ import curses
 import curses.textpad
 import vlc
 
-from soundground import metadata, utils
+from soundground import metadata, utils, credman
 from soundground import winman as wm
 from soundground import command_interpreter
 from soundground.winman import Value
@@ -17,6 +17,7 @@ def init_nav(navlist):
     """
     Fill left navigation pane
     """
+    navlist.add("Guest", False)
     navlist.add("Login")
 
     navlist.add("", False)
@@ -77,15 +78,21 @@ def main(stdscr):
     wg = wm.WindowGroup(stdscr)
     controls = init_windows(wg)
 
-    # Pass command box control to interpreter
-    ci = command_interpreter.Interpreter(controls['cmd'], mp)
-
     # Create status bar on top of the command bar
     statusline = wm.StatusLine(wg['command'], mp)
     wg.extra_draws.append(statusline)
 
     # Keep track of active control
     active = 'nav'
+
+    # Start credentials manager
+    cred = credman.Credentials()
+    cred.load()
+    controls['nav'].items[0]['caption'] = cred.username
+    controls['nav'].select(1)
+
+    # Pass command box control to interpreter
+    ci = command_interpreter.Interpreter(controls['cmd'], statusline, mp, cred)
 
     # Force redraw windows
     wg.resize()
@@ -128,8 +135,7 @@ def main(stdscr):
             item = controls[active].items[index]
             if active == 'nav':
                 # Select nav item
-                if item.caption == 'Login':
-                    pass
+                ci.execute(item['caption'].lower()) # (will break when i18n'd)
 
         elif c in {ord('-'), ord('='), ord('+')}:
             # Volume control

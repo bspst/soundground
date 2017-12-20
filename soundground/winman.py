@@ -7,6 +7,7 @@ Coordinates in (y, x) to be consistent with curses
 
 from soundground import metadata, utils
 import curses
+import time
 
 class Value(object):
     """
@@ -185,10 +186,14 @@ class SelectableList(object):
             self.selected = len(self.items) - 1
 
         # Skip unselectable items
-        if not self.items[self.selected]['selectable']:
+        while not self.items[self.selected]['selectable']:
             if not relative:
                 return False
             self.selected += index
+
+            # Prevent overflow
+            if self.selected < 0 or self.selected >= len(self.items):
+                self.selected -= 2 * index
 
         # Update scroll position
         height, width = self.window.getmaxyx()
@@ -250,19 +255,21 @@ class StatusLine(object):
         Shows text in the status bar until manually dismissed
         """
         self.override_text = text
+        self.draw()
 
     def dismiss(self):
         """
         Dismiss notification text
         """
         self.override_text = None
+        self.draw()
 
     def prompt(self, text, hidden=False):
         """
         Prompts the user for input
         Keystrokes will be hidden if hidden is True
         """
-        import curses.textpad.Textbox
+        import curses.textpad
 
         self.prompting = True
         self.prompt_hidden = hidden
@@ -274,8 +281,17 @@ class StatusLine(object):
         except:
             pass
 
-        box = Textbox(self.window)
+        box = curses.textpad.Textbox(self.window)
         box.edit(self._prompt_validator)
+
+        while self.prompting:
+            # Block until user finishes input
+            time.sleep(0.1)
+
+        if hidden:
+            return self.prompt_value
+        else:
+            return box.gather()[len(text):].strip()
 
     def _prompt_validator(self, char):
         """
@@ -286,10 +302,21 @@ class StatusLine(object):
             self.prompting = False
             return char
 
-        self.prompt_value += chr(char)
-
+        # If hidden (password mode)
         if self.prompt_hidden:
-            # Return null characters if hidden is set
-            return 0
+            if char == curses.KEY_BACKSPACE:
+                # Backspace
+                self.prompt_value = self.prompt_value[:-1]
+                return char
+
+            if char < 32 or char > 126:
+                # Only allow printable characters
+                return 0
+
+            self.prompt_value += chr(char)
+            # Replace printable characters with asterisks
+            return ord('*')
+
+        self.prompt_value = ''
 
         return char

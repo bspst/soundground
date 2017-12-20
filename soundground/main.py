@@ -6,6 +6,7 @@ import argparse
 import sys
 import curses
 import curses.textpad
+import vlc
 
 from soundground import metadata, utils
 from soundground import winman as wm
@@ -64,19 +65,18 @@ def main(stdscr):
     Program entry point.
     """
 
+    # Initialize media player
+    mp = vlc.MediaPlayer()
+
     # Initialize screen
     stdscr.clear()
     stdscr.timeout(100)
     wg = wm.WindowGroup(stdscr)
- 
     controls = init_windows(wg)
-
     # Pass command box control to interpreter
-    ci = command_interpreter.Interpreter(controls['cmd'])
-
+    ci = command_interpreter.Interpreter(controls['cmd'], mp)
     # Keep track of active control
     active = 'nav'
-
     # Force redraw windows
     wg.resize()
 
@@ -93,11 +93,13 @@ def main(stdscr):
             # Quit
             # TODO: Implement y/n confirmation
             break
+
         elif c == ord(':'):
             # Enter command mode
             wg['command'].clear()
             wg['command'].addch(':')
             controls['cmd'].edit(ci.validate)
+
         elif c in {ord('j'), ord('k'), curses.KEY_DOWN, curses.KEY_UP}:
             # Process up/down selection
             if c in {ord('j'), curses.KEY_DOWN}:
@@ -108,6 +110,27 @@ def main(stdscr):
             # Send selection change to active control
             if active in controls:
                 controls[active].select(direction)
+
+        elif c in {ord('-'), ord('='), ord('+')}:
+            # Volume control
+            current = mp.audio_get_volume()
+            if c == ord('-'):
+                current -= 10
+            else:
+                current += 10
+
+            # Clamp volume levels
+            if current > 125:
+                current = 125
+            if current < 0:
+                current = 0
+
+            mp.audio_set_volume(current)
+
+        elif c == ord(' '):
+            # Play/pause audio
+            if mp.can_pause():
+                mp.pause()
 
         # Check terminal resize
         if c == curses.KEY_RESIZE:

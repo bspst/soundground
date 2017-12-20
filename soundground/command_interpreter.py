@@ -6,9 +6,10 @@ Runs commands
 """
 
 class Interpreter(object):
-    def __init__(self, textbox):
+    def __init__(self, textbox, player):
         self.history = []
         self.textbox = textbox
+        self.player = player
         self.done = False
 
     def is_done(self):
@@ -32,7 +33,11 @@ class Interpreter(object):
         return keycode
 
     def execute(self):
-        cmd = self.textbox.gather()[1:].strip()
+        cmd = self.textbox.gather()[1:].strip().split()
 
-        if cmd == 'q' or cmd == 'quit':
+        if cmd[0] == 'q' or cmd[0] == 'quit':
             raise SystemExit(0)
+        elif cmd[0] == 'playurl':
+            # Play custom audio file by URL
+            self.player.set_mrl(cmd[1])
+            self.player.play()

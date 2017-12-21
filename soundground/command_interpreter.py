@@ -2,17 +2,20 @@
 # -*- coding: utf-8 -*-
 """
 Command Interpreter
-Runs commands
+This is where all the commands are executed
 """
 
 class Interpreter(object):
-    def __init__(self, textbox, statusline, player, cred):
+    def __init__(self, textbox, statusline, player, cred, playlist):
         # TODO: maybe change this to **kwargs
+        from soundground import metaget
+        self.fetcher = metaget.ListFetcher(cred)
         self.history = []
         self.textbox = textbox
         self.statusline = statusline
         self.player = player
         self.cred = cred
+        self.playlist = playlist
         self.done = False
 
     def validate(self, keycode):
@@ -41,9 +44,12 @@ class Interpreter(object):
         if cmd[0] == 'q' or cmd[0] == 'quit':
             raise SystemExit(0)
         elif cmd[0] == 'playurl':
-            # Play custom audio file by URL
+            # Play custom audio file by direct link
             self.player.set_mrl(cmd[1])
             self.player.play()
+        elif cmd[0] == 'listurl':
+            # Load playlist from url
+            self.fetcher.fetch(cmd[1])
         elif cmd[0] == 'login':
             # Check if logged in
             if self.cred.username != '':

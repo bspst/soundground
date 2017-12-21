@@ -50,18 +50,22 @@ def refresh_nav(navlist, cred=None):
     navlist.select(1, False)
 
 
+def refresh_playlist():
+    pass
+
+
 def init_windows(wg):
     # Create windows
     wg.create_window('title', 0, 0, 1, Value(100))
     wg.create_window('nav', 1, 0, Value(100, -2), Value(25))
     wg.create_window('command', Value(100, -1), 0, 1, Value(100))
+    wg.create_window('playlist', 1, Value(25, 1), Value(100, -2), Value(75, -2))
 
     # Set title bar style and contents
     wg['title'].bkgd(' ', curses.A_UNDERLINE)
     wg['title'].addstr(0, 0, "Soundground - v{}".format(metadata.version))
 
     # Left navigation pane
-    wg['nav'].border(' ', '|', ' ', ' ', ' ', '|', ' ', '|')
     navlist = wm.SelectableList(wg['nav'])
     refresh_nav(navlist)
     wg.extra_draws.append(navlist)
@@ -70,10 +74,14 @@ def init_windows(wg):
     wg['command'].bkgd(' ', curses.A_REVERSE)
     commandbox = curses.textpad.Textbox(wg['command'])
 
+    # Create playlist
+    playlist = wm.SelectableList(wg['playlist'])
+
     # Return controls
     return {
         'nav': navlist,
-        'cmd': commandbox
+        'cmd': commandbox,
+        'playlist': playlist
     }
 
 
@@ -104,7 +112,7 @@ def main(stdscr):
     refresh_nav(controls['nav'], cred)
 
     # Pass command box control to interpreter
-    ci = command_interpreter.Interpreter(controls['cmd'], statusline, mp, cred)
+    ci = command_interpreter.Interpreter(controls['cmd'], statusline, mp, cred, controls['playlist'])
 
     # Force redraw windows
     wg.resize()

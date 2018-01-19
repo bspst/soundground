@@ -6,13 +6,14 @@ Runs commands
 """
 
 class Interpreter(object):
-    def __init__(self, textbox, statusline, player, cred):
-        # TODO: maybe change this to **kwargs
+    def __init__(self, params):
         self.history = []
-        self.textbox = textbox
-        self.statusline = statusline
-        self.player = player
-        self.cred = cred
+        self.textbox = params['textbox']
+        self.playlist = params['playlist']
+        self.statusline = params['statusline']
+        self.player = params['player']
+        self.cred = params['cred']
+        self.cloudman = params['cloud']
         self.done = False
 
     def validate(self, keycode):
@@ -63,5 +64,34 @@ class Interpreter(object):
             self.cred.password = ''
             self.cred.save()
             self.statusline.notify("Logged out.")
+        elif cmd[0] == 'list':
+            # Replace 'you' to actual username
+            if cmd[1][:4] == "you/":
+                if len(self.cred.username) < 1:
+                    self.playlist.items.clear()
+                    self.playlist.add("Please log in")
+                    return False
+                listurl = self.cred.username + cmd[1][3:]
+            else:
+                listurl = cmd[1]
+
+            # Show temporary loading screen
+            self.playlist.items.clear()
+            self.playlist.add("Loading {}".format(listurl))
+
+            # Fetch list and display on playlist panel
+            items = self.cloudman.fetch_list(listurl)
+            self.playlist.items.clear()
+            if 'error' in items:
+                self.playlist.add(items['error'])
+                return False
+            entries = items['entries']
+
+            # Populate playlist
+            self.playlist.items.clear()
+            for entry in entries:
+                self.playlist.add(entry['url'])
         else:
             self.statusline.notify("Unknown command `{}`".format(cmd[0]))
+
+        return True

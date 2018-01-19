@@ -36,3 +36,6 @@ pip-log.txt
 
 ## paver generated files
 /paver-minilib.zip
+
+## misc.
+Session.vim

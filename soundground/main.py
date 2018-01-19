@@ -8,7 +8,7 @@ import curses
 import curses.textpad
 import vlc
 
-from soundground import metadata, utils, credman
+from soundground import metadata, utils, credman, cloudman
 from soundground import winman as wm
 from soundground import command_interpreter
 from soundground.winman import Value
@@ -27,25 +27,25 @@ def refresh_nav(navlist, cred=None):
 
     navlist.add(cred.username, False)
     if cred.username == '':
-        navlist.add("Login")
+        navlist.add("Login",    value="login")
     else:
-        navlist.add("Logout")
+        navlist.add("Logout",   value="logout")
 
     navlist.add("", False)
 
-    navlist.add("Stream")
-    navlist.add("Charts")
-    navlist.add("Discover")
+    navlist.add("Stream",       value="list stream")
+    navlist.add("Charts",       value="list charts/top")
+    navlist.add("Discover",     value="list discover")
 
     navlist.add("", False)
 
-    navlist.add("Overview")
-    navlist.add("Likes")
-    navlist.add("Playlists")
-    navlist.add("Albums")
-    navlist.add("Stations")
-    navlist.add("Following")
-    navlist.add("History")
+    navlist.add("Overview",     value="list you/collection")
+    navlist.add("Likes",        value="list you/likes")
+    navlist.add("Playlists",    value="list you/sets")
+    navlist.add("Albums",       value="list you/albums")
+    navlist.add("Stations",     value="list you/stations")
+    navlist.add("Following",    value="list you/following")
+    navlist.add("History",      value="list you/history")
 
     navlist.select(1, False)
 
@@ -55,6 +55,7 @@ def init_windows(wg):
     wg.create_window('title', 0, 0, 1, Value(100))
     wg.create_window('nav', 1, 0, Value(100, -2), Value(25))
     wg.create_window('command', Value(100, -1), 0, 1, Value(100))
+    wg.create_window('playlist', 1, Value(25, 1), Value(100, -2), Value(75, -1))
 
     # Set title bar style and contents
     wg['title'].bkgd(' ', curses.A_UNDERLINE)
@@ -70,10 +71,15 @@ def init_windows(wg):
     wg['command'].bkgd(' ', curses.A_REVERSE)
     commandbox = curses.textpad.Textbox(wg['command'])
 
+    # Create playlist
+    playlist = wm.SelectableList(wg['playlist'])
+    wg.extra_draws.append(playlist)
+
     # Return controls
     return {
         'nav': navlist,
-        'cmd': commandbox
+        'cmd': commandbox,
+        'playlist': playlist
     }
 
 
@@ -103,8 +109,19 @@ def main(stdscr):
     cred.load()
     refresh_nav(controls['nav'], cred)
 
+    # Initialize SoundCloud manager with credentials
+    cm = cloudman.CloudManager(cred)
+
     # Pass command box control to interpreter
-    ci = command_interpreter.Interpreter(controls['cmd'], statusline, mp, cred)
+    ci_params = {
+        'textbox': controls['cmd'],
+        'playlist': controls['playlist'],
+        'statusline': statusline,
+        'player': mp,
+        'cred': cred,
+        'cloud': cm
+    }
+    ci = command_interpreter.Interpreter(ci_params)
 
     # Force redraw windows
     wg.resize()
@@ -147,7 +164,7 @@ def main(stdscr):
             item = controls[active].items[index]
             if active == 'nav':
                 # Select nav item
-                ci.execute(item['caption'].lower()) # (will break when i18n'd)
+                ci.execute(item['value'])
                 refresh_nav(controls['nav'], cred)
 
         elif c in {ord('-'), ord('='), ord('+')}:

@@ -152,13 +152,24 @@ class SelectableList(object):
                 pass
         self.window.refresh()
 
-    def add(self, caption, selectable=True):
+    def add(self, caption, selectable=True, value=None):
         """
-        Add an item to the list
+        Add an item to the list and draws it
+
+        An item is a map with the following keys:
+        - caption:    the text displayed on the list
+        - selectable: if False, the item will skip selection
+        - value:      a custom value, could be used to specify a command to be
+                      executed when selected
         """
+
+        if value == None:
+            value = caption
+
         self.items.append({
             'caption': caption,
-            'selectable': selectable
+            'selectable': selectable,
+            'value': value
         })
         self.draw()
 

@@ -80,7 +80,7 @@ class Interpreter(object):
             self.playlist.add("Loading {}".format(listurl))
 
             # Fetch list and display on playlist panel
-            items = self.cloudman.fetch_list(listurl)
+            items = self.cloudman.fetch_url(listurl)
             self.playlist.items.clear()
             if 'error' in items:
                 self.playlist.add(items['error'])
@@ -91,6 +91,9 @@ class Interpreter(object):
             self.playlist.items.clear()
             for entry in entries:
                 self.playlist.add(entry['url'])
+
+            # Start processing list
+            self.cloudman.async_process_playlist()
         else:
             self.statusline.notify("Unknown command `{}`".format(cmd[0]))
 

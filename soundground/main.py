@@ -18,6 +18,9 @@ def refresh_nav(navlist, cred=None):
     Fill left navigation pane
     """
 
+    # Save current selection
+    selected_item = navlist.selected
+
     # Clear the list to prevent duplicates
     navlist.items.clear()
 
@@ -25,6 +28,7 @@ def refresh_nav(navlist, cred=None):
     if cred == None:
         cred = credman.Credentials()
 
+    # Add buttons
     navlist.add(cred.username, False)
     if cred.username == '':
         navlist.add("Login",    value="login")
@@ -33,21 +37,31 @@ def refresh_nav(navlist, cred=None):
 
     navlist.add("", False)
 
-    navlist.add("Stream",       value="list stream")
-    navlist.add("Charts",       value="list charts/top")
-    navlist.add("Discover",     value="list discover")
+    """
+    These stuff won't work without auth. SoundCloud uses OAuth for 3rd party
+    applications, however since they've closed off the application registration,
+    soundground is forced to use youtube-dl, which doesn't support Soundcloud
+    authentication yet.
 
-    navlist.add("", False)
+    See https://github.com/rg3/youtube-dl/issues/9272
+    """
 
-    navlist.add("Overview",     value="list you/collection")
+    # navlist.add("Stream",       value="list stream")
+    # navlist.add("Charts",       value="list charts/top")
+    # navlist.add("Discover",     value="list discover")
+
+    # navlist.add("", False)
+
+    # navlist.add("Overview",     value="list you/collection")
     navlist.add("Likes",        value="list you/likes")
     navlist.add("Playlists",    value="list you/sets")
-    navlist.add("Albums",       value="list you/albums")
-    navlist.add("Stations",     value="list you/stations")
-    navlist.add("Following",    value="list you/following")
-    navlist.add("History",      value="list you/history")
+    # navlist.add("Albums",       value="list you/albums")
+    # navlist.add("Stations",     value="list you/stations")
+    # navlist.add("Following",    value="list you/following")
+    # navlist.add("History",      value="list you/history")
 
-    navlist.select(1, False)
+    # Select list
+    navlist.select(selected_item, False)
 
 
 def init_windows(wg):
@@ -65,6 +79,7 @@ def init_windows(wg):
     wg['nav'].border(' ', '|', ' ', ' ', ' ', '|', ' ', '|')
     navlist = wm.SelectableList(wg['nav'])
     refresh_nav(navlist)
+    navlist.active = True
     wg.extra_draws.append(navlist)
 
     # Command bar and textbox
@@ -102,7 +117,8 @@ def main(stdscr):
     wg.extra_draws.append(statusline)
 
     # Keep track of active control
-    active = 'nav'
+    active_list = ['nav', 'playlist']
+    active_index = 0
 
     # Start credentials manager
     cred = credman.Credentials()
@@ -110,7 +126,7 @@ def main(stdscr):
     refresh_nav(controls['nav'], cred)
 
     # Initialize SoundCloud manager with credentials
-    cm = cloudman.CloudManager(cred)
+    cm = cloudman.CloudManager(cred, controls['playlist'])
 
     # Pass command box control to interpreter
     ci_params = {
@@ -155,11 +171,30 @@ def main(stdscr):
                 direction = -1
 
             # Send selection change to active control
+            active = active_list[active_index]
             if active in controls:
                 controls[active].select(direction)
 
+        elif c == 9:
+            # Tab to toggle list selection
+            if active_index < len(active_list) - 1:
+                active_index += 1
+            else:
+                active_index = 0
+
+            # Deactivate all lists
+            for control in active_list:
+                controls[control].active = False
+                controls[control].draw()
+
+            # Activate active list
+            active = controls[active_list[active_index]]
+            active.active = True
+            active.draw()
+
         elif c == 10:
             # Enter to confirm selection
+            active = active_list[active_index]
             index = controls[active].selected
             item = controls[active].items[index]
             if active == 'nav':

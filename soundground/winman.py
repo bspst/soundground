@@ -129,6 +129,7 @@ class SelectableList(object):
         self.items = []
         self.selected = 0
         self.scrollpos = 0
+        self.active = False
 
     def draw(self):
         """
@@ -143,8 +144,12 @@ class SelectableList(object):
                 break
 
             item = self.items[index]
-            # Change background for selected item
-            attr = curses.A_REVERSE if index == self.selected else curses.A_NORMAL
+
+            # Highlight selected item
+            attr = curses.A_NORMAL
+            if self.active and index == self.selected:
+                attr = curses.A_REVERSE
+
             padded = item['caption'].ljust(width)
             try:
                 self.window.addstr(offset, 0, padded, attr)
@@ -161,6 +166,7 @@ class SelectableList(object):
         - selectable: if False, the item will skip selection
         - value:      a custom value, could be used to specify a command to be
                       executed when selected
+        - info:       some additional info
         """
 
         if value == None:
@@ -169,7 +175,8 @@ class SelectableList(object):
         self.items.append({
             'caption': caption,
             'selectable': selectable,
-            'value': value
+            'value': value,
+            'info': {}
         })
         self.draw()
 
@@ -185,6 +192,9 @@ class SelectableList(object):
         Highlight an item by its index. If relative, the current selection index
         will be incremented by the index parameter instead of being set.
         """
+        if len(self.items) < 1:
+            return False
+
         if relative:
             self.selected += index
         else:

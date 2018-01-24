@@ -39,6 +39,9 @@ class Interpreter(object):
         else:
             cmd = cmdstr.split()
 
+        if len(cmd) < 1:
+            return False
+
         if cmd[0] == 'q' or cmd[0] == 'quit':
             raise SystemExit(0)
         elif cmd[0] == 'playurl':
